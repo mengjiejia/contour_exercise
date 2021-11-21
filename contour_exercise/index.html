@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Geospatial Contour Exercise</title>
+
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <style>
+        #time
+        {
+            position: absolute;
+            top:15px;
+            left: 15px;
+            font-family: sans-serif;
+            font-size: 12pt;
+        }
+        .legend_text{
+            font-family: sans-serif;
+            font-size: 5pt;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+<svg width="80vw" viewbox="0 0 512 512"></svg>
+
+<div id='CT'>
+</div>
+
+
+<script>
+
+    const Data_CT = `data/Data_CT.csv`; //  load data
+    let svg = d3.select("svg");
+    //console.log(Data_CT);
+    //console.log(d3.extent(Data_CT));
+    // min max 
+    const min = 0;
+    const max = 3024;
+    // path generator
+    const path = d3.geoPath();
+
+    function plot_contour(fileName, min, max)
+    {
+        // Step 1 read csv file
+        d3.csv(fileName).then(function (data)
+        {
+            // data dimensions
+            let m= 512, n= 512;
+
+            // Step 2 convert data into 1D list
+            let values_T= [];
+            data.forEach(function (d) {
+                values_T.push(+d[0])
+            });
+
+
+
+            /////////////////COLOR CODING/////////////////////////////
+            let colors = d3.scaleLinear()
+                .domain(d3.range(min,max,
+                    parseInt(Math.abs(max-min)/6.5)))
+                .range(["#fafafa", "#3e5eba", "#2b83ba",
+                    "#abdda4", "#ffffbf", "#fdae61", "#d7191c"])
+                .interpolate(d3.interpolateHcl);
+
+            ////////////////////////////////////////////////////////////
+
+
+            let contours = d3.contours()
+            .size([m, n])
+                .thresholds(d3.range(min,max,300)) // threshold is 300
+                (values_T);
+
+            // Step 3 append contour to path (d)
+            svg.append("g").attr("class","contours")
+                .selectAll("path")
+                .data(contours)
+                .enter()
+                .append("path")
+                .attr("d",function(d){return path(d)})
+                .attr("stroke","black")
+                .attr("stroke-width",".1px")
+                .attr("stroke-linejoin", "round")
+                .attr("fill",
+                    function (d) {
+                        return colors(d.value)
+                    })
+        })
+    }
+
+
+    plot_contour(Data_CT, min, max)
+
+</script>
+</body>
+</html>
